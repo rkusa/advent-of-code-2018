@@ -1,6 +1,6 @@
 use std::collections::HashSet;
-use std::io::{self, BufReader, BufRead};
 use std::fs::File;
+use std::io::{self, BufRead, BufReader};
 use std::str::FromStr;
 
 fn part1() -> Result<i32, io::Error> {
