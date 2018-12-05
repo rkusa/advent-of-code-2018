@@ -1,0 +1,5 @@
+.*
+!.gitignore
+input.txt
+target
+**/*.rs.bk
