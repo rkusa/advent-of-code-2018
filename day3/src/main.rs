@@ -32,28 +32,34 @@ impl Rectangle {
     }
 }
 
-fn part1() -> Result<usize, io::Error> {
-    let re = Regex::new(r"^#\d+ @ (?P<x>\d+),(?P<y>\d+): (?P<w>\d+)x(?P<h>\d+)$").unwrap();
+fn rectangles() -> Result<Vec<(usize, Rectangle)>, io::Error> {
+    let re = Regex::new(r"^#(?P<id>\d+) @ (?P<x>\d+),(?P<y>\d+): (?P<w>\d+)x(?P<h>\d+)$").unwrap();
     let f = BufReader::new(File::open("input.txt")?);
-    let mut rects = f
+    let rects = f
         .lines()
         .filter_map(Result::ok)
         .map(|line| {
             let caps = re.captures(&line).unwrap();
 
             // regex matches only numbers, thus unwrap is fine
+            let id = usize::from_str(caps.name("id").unwrap().as_str()).unwrap();
             let x1 = usize::from_str(caps.name("x").unwrap().as_str()).unwrap();
             let y1 = usize::from_str(caps.name("y").unwrap().as_str()).unwrap();
             let w = usize::from_str(caps.name("w").unwrap().as_str()).unwrap();
             let h = usize::from_str(caps.name("h").unwrap().as_str()).unwrap();
-            Rectangle {
+            (id, Rectangle {
                 x1,
                 y1,
                 x2: x1 + w - 1,
                 y2: y1 + h - 1,
-            }
+            })
         })
-        .collect::<Vec<Rectangle>>();
+        .collect();
+    Ok(rects)
+}
+
+fn part1() -> Result<usize, io::Error> {
+    let mut rects: Vec<Rectangle> = rectangles()?.into_iter().map(|(_, r)| r).collect();
 
     let mut overlaps = HashSet::new();
     while let Some(rect) = rects.pop() {
@@ -71,8 +77,32 @@ fn part1() -> Result<usize, io::Error> {
     Ok(overlaps.len())
 }
 
+fn part2() -> Result<Option<usize>, io::Error> {
+    let rects = rectangles()?;
+
+    'outer: for (id, rect) in &rects {
+        for (_, other) in &rects {
+            if rect == other {
+                continue;
+            }
+            if rect.overlap(other).is_some() {
+                // found an overlap, this is not it
+                // Note: could also already remove other, though, to much effort to remove something
+                // from a Vec that we are currently iterating
+                continue 'outer;
+            }
+        }
+
+        // no overlap found, this is it!
+        return Ok(Some(*id));
+    }
+
+    Ok(None)
+}
+
 fn main() -> Result<(), io::Error> {
     println!("Part 1: {}", part1()?);
+    println!("Part 2: {}", part2()?.unwrap_or(0));
     Ok(())
 }
 
